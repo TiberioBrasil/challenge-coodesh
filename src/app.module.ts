@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ApiServicesModule } from './api-services/api-services.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ApiServicesModule } from './api-services/api-services.module';
 import appConfig from './config/app.config';
 
 @Module({
@@ -26,6 +27,7 @@ import appConfig from './config/app.config';
       envFilePath: process.env.NODE_ENV !== 'production' ? '.env' : null,
       load: [appConfig],
     }),
+    ScheduleModule.forRoot(),
     ApiServicesModule,
   ],
   controllers: [AppController],
