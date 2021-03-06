@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApiServicesModule } from './api-services/api-services.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
 import appConfig from './config/app.config';
 
 @Module({
@@ -29,6 +30,7 @@ import appConfig from './config/app.config';
     }),
     ScheduleModule.forRoot(),
     ApiServicesModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
