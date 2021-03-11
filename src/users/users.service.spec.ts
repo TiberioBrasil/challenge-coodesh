@@ -55,34 +55,6 @@ const mockUser: User = {
 
 const mockUserArray = [mockUser];
 
-const mockUserNotFound = {
-  statusCode: 400,
-  message: 'User #4f69057a-20c3-474f-8440-c015140af95a1 not found',
-  error: 'Bad Request',
-  timestamp: '2021-03-08T01:09:04.454Z',
-};
-
-const mockErrorLimiteLow = {
-  statusCode: 400,
-  message: ['limit must be a positive number'],
-  error: 'Bad Request',
-  timestamp: '2021-03-07T14:50:43.231Z',
-};
-
-const mockErrorLimiteHigh = {
-  statusCode: 400,
-  message: ['limit must not be greater than 100'],
-  error: 'Bad Request',
-  timestamp: '2021-03-07T14:52:07.555Z',
-};
-
-const mockErrorOffsetLimitLow = {
-  statusCode: 400,
-  message: ['offset must not be less than 0'],
-  error: 'Bad Request',
-  timestamp: '2021-03-07T14:52:44.664Z',
-};
-
 describe('UsersService', () => {
   let usersService: UsersService;
   let usersRepository: Repository<User>;
