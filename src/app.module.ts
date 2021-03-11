@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ApiServicesModule } from './api-services/api-services.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
 import appConfig from './config/app.config';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -16,8 +15,10 @@ import appConfig from './config/app.config';
         host: process.env.DATABASE_HOST,
         port: +process.env.DATABASE_PORT,
         username: process.env.DATABASE_USER,
-        password: process.env.DATABASE_PASS,
+        password: process.env.DATABASE_PASSWORD,
         database: process.env.DATABASE_NAME,
+        autoLoadEntities: true,
+        synchronize: false,
         ssl: {
           rejectUnauthorized: false,
         },
@@ -29,7 +30,6 @@ import appConfig from './config/app.config';
       load: [appConfig],
     }),
     ScheduleModule.forRoot(),
-    ApiServicesModule,
     UsersModule,
   ],
   controllers: [AppController],

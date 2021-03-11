@@ -35,7 +35,7 @@ export class User {
   locationCountry: string;
 
   @Column({ nullable: false })
-  locationPostcode: number;
+  locationPostcode: string;
 
   @Column({ nullable: false })
   locationCoordinatesLatitude: string;

@@ -39,8 +39,8 @@ export class CreateUserDto {
   @IsString()
   locationCountry: string;
 
-  @IsNumber()
-  locationPostcode: number;
+  @IsString()
+  locationPostcode: string;
 
   @IsString()
   locationCoordinatesLatitude: string;

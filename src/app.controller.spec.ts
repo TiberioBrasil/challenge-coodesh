@@ -15,8 +15,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return "REST Back-end Challenge 20201209 Running"', () => {
+      expect(appController.getDefaultMessage()).toBe(
+        'REST Back-end Challenge 20201209 Running',
+      );
     });
   });
 });
