@@ -1,13 +1,13 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import createMockInstance from 'jest-create-mock-instance';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { Repository } from 'typeorm';
 import { ApiServicesService } from '../api-services/api-services.service';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
 import { Status } from './enum/status.enum';
-import { NotFoundException } from '@nestjs/common';
+import { UsersService } from './users.service';
 
 const mockApiServicesService = {
   getHttpResponse: jest.fn(),

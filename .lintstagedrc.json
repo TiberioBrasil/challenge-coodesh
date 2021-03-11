@@ -1,0 +1,6 @@
+{
+  ".ts": [
+    "lint 'src/**' --fix",
+    "yarn test:staged"
+  ]
+}
