@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Param,
-  Post,
   Put,
   Query,
 } from '@nestjs/common';
@@ -26,11 +25,6 @@ export class UsersController {
   @Get(':id')
   async show(@Param('id') id: string): Promise<User> {
     return await this.usersService.show(id);
-  }
-
-  @Post()
-  async create(): Promise<User> {
-    return await this.usersService.create();
   }
 
   @Put(':id')

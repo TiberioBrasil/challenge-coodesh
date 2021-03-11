@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ApiServicesService } from '../api-services/api-services.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
-import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Status } from './enum/status.enum';
@@ -41,10 +42,46 @@ export class UsersService {
     return user;
   }
 
-  @Cron('0 40 9 * * *', {
+  async create(createUserDto: CreateUserDto): Promise<void> {
+    const checkIfEmailExists = await this.usersRepository.findOne({
+      where: { email: createUserDto.email },
+    });
+
+    if (!checkIfEmailExists) {
+      try {
+        const createUser = this.usersRepository.create(createUserDto);
+        await this.usersRepository.save(createUser);
+      } catch (error) {
+        this.logger.debug(`Error trying to create the user: ${error}`);
+      }
+    } else {
+      this.logger.debug(`Email already exists: ${createUserDto.email}`);
+    }
+  }
+
+  async update(loginUuid: string, updateUserDto: UpdateUserDto): Promise<User> {
+    delete updateUserDto.loginUuid;
+    delete updateUserDto.email;
+
+    const user = await this.usersRepository.preload({
+      loginUuid,
+      ...updateUserDto,
+    });
+    if (!user) {
+      throw new NotFoundException(`User #${loginUuid} not found`);
+    }
+    return this.usersRepository.save(user);
+  }
+
+  async destroy(id: string): Promise<void> {
+    const user = await this.show(id);
+    await this.usersRepository.delete(user);
+  }
+
+  @Cron('0 56 9 * * *', {
     timeZone: 'America/Fortaleza',
   })
-  async create(): Promise<any> {
+  async _cronUsers(): Promise<void> {
     const pagesToLoad = 20;
     const resultsPerPage = 100;
     const urlsToFetch = [];
@@ -69,43 +106,6 @@ export class UsersService {
     }
 
     Promise.all(urlsToFetch);
-
-    return 'Usuários criados com sucesso!';
-  }
-
-  async update(loginUuid: string, updateUserDto: UpdateUserDto): Promise<User> {
-    delete updateUserDto.loginUuid;
-    delete updateUserDto.email;
-
-    const user = await this.usersRepository.preload({
-      loginUuid,
-      ...updateUserDto,
-    });
-    if (!user) {
-      throw new NotFoundException(`User #${loginUuid} not found`);
-    }
-    return this.usersRepository.save(user);
-  }
-
-  async destroy(id: string): Promise<void> {
-    const user = await this.show(id);
-    await this.usersRepository.delete(user);
-  }
-
-  async _getUsers(url: string): Promise<IUser[]> {
-    // Use axios to fetch data from a specific URL usibg built-in HttpModule
-    const usersResponse = await this.apiServicesService.getHttpResponse(url);
-
-    if (!usersResponse) {
-      throw new BadRequestException(`Erro ao tentar selecionar da url: ${url}`);
-    }
-
-    const returnData = [];
-    usersResponse.results.map((user: IUser) => {
-      returnData.push(user);
-    });
-
-    return returnData;
   }
 
   async _cronFetchUsers(url: string): Promise<void> {
@@ -118,7 +118,7 @@ export class UsersService {
 
       if (!checkIfUserMailAlreadyExists) {
         try {
-          const createdUser = this.usersRepository.create({
+          this.create({
             loginUuid: user.login.uuid,
             gender: user.gender,
             nameTitle: user.name.title,
@@ -157,7 +157,7 @@ export class UsersService {
             status: Status.draft,
           });
 
-          return await this.usersRepository.save(createdUser);
+          return;
         } catch (error) {
           if (
             error
@@ -173,5 +173,21 @@ export class UsersService {
         this.logger.debug(`Email already exists: ${user.email}`);
       }
     });
+  }
+
+  async _getUsers(url: string): Promise<IUser[]> {
+    // Use axios to fetch data from a specific URL usibg built-in HttpModule
+    const usersResponse = await this.apiServicesService.getHttpResponse(url);
+
+    if (!usersResponse) {
+      throw new BadRequestException(`Erro ao tentar selecionar da url: ${url}`);
+    }
+
+    const returnData = [];
+    usersResponse.results.map((user: IUser) => {
+      returnData.push(user);
+    });
+
+    return returnData;
   }
 }
