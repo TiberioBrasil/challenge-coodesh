@@ -52,7 +52,15 @@ export class UsersService {
         const createUser = this.usersRepository.create(createUserDto);
         await this.usersRepository.save(createUser);
       } catch (error) {
-        this.logger.debug(`Error trying to create the user: ${error}`);
+        if (
+          error
+            .toString()
+            .indexOf('duplicate key value violates unique constraint') !== -1
+        ) {
+          this.logger.debug(`Email already exists: ${createUserDto.email}`);
+        } else {
+          this.logger.debug(`Error trying to create the user: ${error}`);
+        }
       }
     } else {
       this.logger.debug(`Email already exists: ${createUserDto.email}`);
@@ -78,7 +86,7 @@ export class UsersService {
     await this.usersRepository.delete(user);
   }
 
-  @Cron('0 56 9 * * *', {
+  @Cron('00 00 00 * * *', {
     timeZone: 'America/Fortaleza',
   })
   async _cronUsers(): Promise<void> {
