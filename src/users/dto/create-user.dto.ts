@@ -10,7 +10,11 @@ import {
 import { Status } from '../enum/status.enum';
 
 export class CreateUserDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'The age of a cat',
+    minimum: 1,
+    default: 1,
+  })
   @IsUUID()
   loginUuid: string;
 
