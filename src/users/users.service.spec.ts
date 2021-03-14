@@ -33,7 +33,7 @@ const mockUser: User = {
   loginUsername: 'angrybutterfly251',
   loginPassword: 'waldo',
   loginSalt: 'G83WdzxA',
-  logiMd5: '2e742bbc47b33dea1b4249f2a13e0a2b',
+  loginMd5: '2e742bbc47b33dea1b4249f2a13e0a2b',
   loginSha1: 'f5724ae036bc1d8bca0929cb80c94132cafde1a3',
   loginSha256:
     'e458298e8f3383d85e02ec36fc3559d74b496baf5666b167233d0bc72f6b3c8f',

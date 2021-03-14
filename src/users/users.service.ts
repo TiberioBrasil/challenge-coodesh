@@ -161,7 +161,7 @@ export class UsersService {
             loginUsername: user.login.username,
             loginPassword: user.login.password,
             loginSalt: user.login.salt,
-            logiMd5: user.login.md5,
+            loginMd5: user.login.md5,
             loginSha1: user.login.sha1,
             loginSha256: user.login.sha256,
             dobDate: new Date(user.dob.date),

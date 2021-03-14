@@ -68,7 +68,7 @@ export class User {
   loginSalt: string;
 
   @Column({ nullable: false })
-  logiMd5: string;
+  loginMd5: string;
 
   @Column({ nullable: false })
   loginSha1: string;

@@ -92,7 +92,7 @@ export class CreateUserDto {
 
   @ApiProperty()
   @IsHash('md5')
-  logiMd5: string;
+  loginMd5: string;
 
   @ApiProperty()
   @IsHash('sha1')
