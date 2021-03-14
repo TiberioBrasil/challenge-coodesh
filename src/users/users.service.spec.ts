@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import createMockInstance from 'jest-create-mock-instance';
@@ -98,16 +98,10 @@ describe('UsersService', () => {
   });
 
   describe('show()', () => {
-    let show;
-
-    beforeEach(() => {
-      show = jest.fn();
-    });
-
     it('should return a specific user', async () => {
       const userUUID = 'valid-uuid';
       const findSpy = jest
-        .spyOn(usersRepository, 'findOne')
+        .spyOn(usersRepository, 'findOneOrFail')
         .mockImplementationOnce(async () => mockUser);
 
       const user = await usersService.show(userUUID);
@@ -117,33 +111,156 @@ describe('UsersService', () => {
     });
 
     it('should throw an error if the uuid is not found', async () => {
-      show.mockRejectValue({ message: 'User not found' });
-      expect(usersRepository.findOne('invalid')).rejects.toThrow(
-        NotFoundException,
-      );
+      try {
+        const userUUID = '4f69057a-20c3-474f-8440-c015140af95a';
+        await usersService.show(userUUID);
+      } catch (e) {
+        expect(e.status).toBe(404);
+        expect(e.message).toBe('User not found');
+      }
+    });
+  });
 
-      // try {
-      //   const userUUID = '4f69057a-20c3-474f-8440-c015140af95a';
-      //   const user = await usersService.show(userUUID);
-      //   console.log(user);
-      // } catch (e) {
-      //   expect(e.status).toBe(400);
-      //   expect(e.message).toBe('Você deve informar de 1 a 3 ingredientes!');
-      // }
+  describe('create()', () => {
+    it('should create a user', async () => {
+      const findOneSpy = jest
+        .spyOn(usersRepository, 'findOne')
+        .mockImplementation(async () => null);
+      const createSpy = jest
+        .spyOn(usersRepository, 'create')
+        .mockImplementation(() => mockUser);
+      const saveSpy = jest
+        .spyOn(usersRepository, 'save')
+        .mockImplementation(async () => mockUser as User);
+
+      expect(await usersService.create({ ...mockUser })).toBe(mockUser);
+      expect(findOneSpy).toHaveBeenCalledTimes(1);
+      expect(createSpy).toHaveBeenCalledTimes(1);
+      expect(saveSpy).toHaveBeenCalledTimes(1);
     });
 
-    //   it('should throw an error if the uuid is not found', async () => {
-    //     jest
-    //       .spyOn(usersRepository, 'findOne')
-    //       .mockImplementation(async () => mockUserNotFound);
+    it('should throw an error if the user id is already registered', async () => {
+      const findOneSpy = jest
+        .spyOn(usersRepository, 'findOne')
+        .mockImplementation(async () => mockUser);
 
-    //     try {
-    //       const user = await usersService.show('123');
-    //       console.log(user);
-    //     } catch (e) {
-    //       expect(e.status).toBe(400);
-    //       expect(e.message).toBe('Você deve informar de 1 a 3 ingredientes!');
-    //     }
-    //   });
+      try {
+        await usersService.create({ ...mockUser });
+      } catch (e) {
+        expect(e.status).toBe(400);
+        expect(e.message).toBe(`Email already exists: ${mockUser.email}`);
+      }
+      expect(findOneSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an error if the user id is already registered - async functions', async () => {
+      const findOneSpy = jest
+        .spyOn(usersRepository, 'findOne')
+        .mockImplementation(async () => null);
+      const createSpy = jest
+        .spyOn(usersRepository, 'create')
+        .mockImplementation(() => mockUser);
+      const saveSpy = jest
+        .spyOn(usersRepository, 'save')
+        .mockImplementation(async () => {
+          throw new BadRequestException(
+            `Email already exists: ${mockUser.email}`,
+          );
+        });
+
+      try {
+        await usersService.create({ ...mockUser });
+      } catch (e) {
+        expect(e.status).toBe(400);
+        expect(e.message).toBe(
+          `Error trying to create the user: Error: Email already exists: ${mockUser.email}`,
+        );
+      }
+      expect(findOneSpy).toHaveBeenCalledTimes(1);
+      expect(createSpy).toHaveBeenCalledTimes(1);
+      expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an error if any errors happened trying to create the user - async functions', async () => {
+      const findOneSpy = jest
+        .spyOn(usersRepository, 'findOne')
+        .mockImplementation(async () => null);
+      const createSpy = jest
+        .spyOn(usersRepository, 'create')
+        .mockImplementation(() => {
+          throw new Error('duplicate key value violates unique constraint');
+        });
+
+      try {
+        await usersService.create({ ...mockUser });
+      } catch (e) {
+        expect(e.status).toBe(400);
+        expect(e.message).toBe(`Email already exists: ${mockUser.email}`);
+      }
+      expect(findOneSpy).toHaveBeenCalledTimes(1);
+      expect(createSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('update()', () => {
+    it('should update a user', async () => {
+      const preloadSpy = jest
+        .spyOn(usersRepository, 'preload')
+        .mockImplementation(async () => mockUser);
+      const saveSpy = jest
+        .spyOn(usersRepository, 'save')
+        .mockImplementation(async () => mockUser as User);
+
+      expect(
+        await usersService.update(mockUser.loginUuid, { ...mockUser }),
+      ).toBe(mockUser);
+      expect(preloadSpy).toHaveBeenCalledTimes(1);
+      expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw a badrequest exception if the user is not found', async () => {
+      const preloadSpy = jest
+        .spyOn(usersRepository, 'preload')
+        .mockImplementation(async () => null);
+
+      try {
+        await usersService.update(mockUser.loginUuid, { ...mockUser });
+      } catch (e) {
+        expect(e.status).toBe(404);
+        expect(e.message).toBe(`User #${mockUser.loginUuid} not found`);
+      }
+      expect(preloadSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('delete()', () => {
+    it('should delete a user', async () => {
+      const serviceShowSpy = jest
+        .spyOn(usersRepository, 'findOneOrFail')
+        .mockImplementation(async () => mockUser);
+      const deleteSpy = jest
+        .spyOn(usersRepository, 'delete')
+        .mockImplementation();
+
+      expect(await usersService.destroy(mockUser.loginUuid)).toBeUndefined();
+      expect(serviceShowSpy).toHaveBeenCalledTimes(1);
+      expect(deleteSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw a badrequest exception if the user is not found', async () => {
+      const serviceShowSpy = jest
+        .spyOn(usersRepository, 'findOneOrFail')
+        .mockImplementation(async () => {
+          throw new Error(`User not found`);
+        });
+
+      try {
+        await usersService.destroy(mockUser.loginUuid);
+      } catch (e) {
+        expect(e.status).toBe(404);
+        expect(e.message).toBe(`User not found`);
+      }
+      expect(serviceShowSpy).toHaveBeenCalledTimes(1);
+    });
   });
 });

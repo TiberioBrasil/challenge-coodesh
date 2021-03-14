@@ -1,9 +1,15 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { Status } from '../enum/status.enum';
 
 @Entity()
 @Unique(['email'])
 export class User {
+  @ApiProperty({
+    description: 'User UUID',
+    minimum: 1,
+    default: 1,
+  })
   @PrimaryGeneratedColumn('uuid')
   loginUuid: string;
 

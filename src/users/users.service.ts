@@ -35,14 +35,15 @@ export class UsersService {
   }
 
   async show(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne(id);
-    if (!user) {
+    try {
+      const user = await this.usersRepository.findOneOrFail(id);
+      return user;
+    } catch {
       throw new NotFoundException(`User not found`);
     }
-    return user;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<void> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const checkIfEmailExists = await this.usersRepository.findOne({
       where: { email: createUserDto.email },
     });
@@ -51,19 +52,26 @@ export class UsersService {
       try {
         const createUser = this.usersRepository.create(createUserDto);
         await this.usersRepository.save(createUser);
+        return createUser;
       } catch (error) {
         if (
           error
             .toString()
             .indexOf('duplicate key value violates unique constraint') !== -1
         ) {
-          this.logger.debug(`Email already exists: ${createUserDto.email}`);
+          throw new BadRequestException(
+            `Email already exists: ${createUserDto.email}`,
+          );
         } else {
-          this.logger.debug(`Error trying to create the user: ${error}`);
+          throw new BadRequestException(
+            `Error trying to create the user: ${error}`,
+          );
         }
       }
     } else {
-      this.logger.debug(`Email already exists: ${createUserDto.email}`);
+      throw new BadRequestException(
+        `Email already exists: ${createUserDto.email}`,
+      );
     }
   }
 
@@ -71,22 +79,29 @@ export class UsersService {
     delete updateUserDto.loginUuid;
     delete updateUserDto.email;
 
-    const user = await this.usersRepository.preload({
+    const updateUser = await this.usersRepository.preload({
       loginUuid,
       ...updateUserDto,
     });
-    if (!user) {
+    if (!updateUser) {
       throw new NotFoundException(`User #${loginUuid} not found`);
     }
-    return this.usersRepository.save(user);
+
+    return this.usersRepository.save(updateUser);
   }
 
   async destroy(id: string): Promise<void> {
-    const user = await this.show(id);
+    let user: User;
+    try {
+      user = await this.usersRepository.findOneOrFail(id);
+    } catch {
+      throw new NotFoundException(`User not found`);
+    }
+
     await this.usersRepository.delete(user);
   }
 
-  @Cron('00 00 00 * * *', {
+  @Cron('50 57 * * * *', {
     timeZone: 'America/Fortaleza',
   })
   async _cronUsers(): Promise<void> {
